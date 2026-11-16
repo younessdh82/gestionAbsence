@@ -921,7 +921,7 @@ Cette liste regroupe les grandes tâches techniques à réaliser pendant le dév
 
 Avant de commencer, installer :
 
-- Node.js (version LTS).
+- Node.js 22 ou 24 LTS.
 - npm.
 - MongoDB local ou MongoDB Atlas.
 - Git.
@@ -931,86 +931,107 @@ Avant de commencer, installer :
 ## 14.2. Cloner le projet
 
 ```bash
-git clone https://github.com/username/school-attendance.git
+git clone https://github.com/younessdh82/gestionAbsence.git
 
-cd school-attendance
+cd gestionAbsence
 ```
 
-## 14.3. Créer le frontend avec Create React App
+## 14.3. Installer le frontend Create React App
 
-À la racine du projet :
+Le lanceur frontend CRA local sert uniquement aux essais et n'est pas versionné.
+L'équipe chargée du frontend fournit son propre socle CRA (chapitre 8).
+Si le dossier `frontend` n'existe pas encore après clonage :
 
 ```bash
 npx create-react-app frontend
 ```
 
-Installer les dépendances frontend :
+Depuis la racine du dépôt :
 
 ```bash
 cd frontend
 
-npm install react-router-dom axios
+npm install
 ```
 
 Le frontend utilise Create React App. Il ne faut pas installer Vite ni créer de fichier `vite.config.js`.
 
-Dans `frontend/package.json`, ajouter la propriété suivante à la racine de l'objet JSON :
+Configurer le proxy dans `frontend/package.json` à la racine de l'objet JSON :
 
 ```json
 {
-  "proxy": "http://localhost:5000"
+  "proxy": "http://localhost:4000"
 }
 ```
 
 Cette configuration permet au frontend d'envoyer les requêtes API vers le backend pendant le développement.
 
-## 14.4. Créer le backend
+## 14.4. Installer le backend
 
-Depuis la racine du projet :
+Les fichiers Express et les scripts npm sont déjà configurés. Depuis la racine :
 
 ```bash
-mkdir backend
-
 cd backend
 
-npm init -y
+npm ci
 ```
 
-Installer les dépendances :
-
-```bash
-npm install express mongoose bcryptjs jsonwebtoken dotenv cors
-```
-
-Installer Nodemon pour le développement :
-
-```bash
-npm install --save-dev nodemon
-```
-
-Dans `backend/package.json`, configurer les scripts :
+Scripts disponibles dans `backend/package.json` :
 
 ```json
 {
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "test": "node --test"
   }
 }
 ```
 
 ## 14.5. Configurer les variables d'environnement
 
-Créer un fichier `.env` dans le dossier `backend` :
+Copier `backend/.env.example` vers `backend/.env` (ou conserver le fichier local
+déjà configuré). Sous PowerShell, depuis la racine :
 
-```env
-PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/school_attendance
-JWT_SECRET=your_secret_key
-NODE_ENV=development
+```powershell
+Copy-Item backend/.env.example backend/.env
 ```
 
-Ne jamais publier le fichier `.env` sur GitHub.
+Renseigner l'URI privée dans `.env`. Exemple sans identifiants :
+
+```env
+PORT=4000
+MONGODB_URI=mongodb://127.0.0.1:27017/
+FRONTEND_URL=http://localhost:3000
+```
+
+| Variable | Utilisation | Valeur par défaut |
+|---|---|---|
+| `PORT` | Port HTTP, entier de 1 à 65535 | `4000` |
+| `MONGODB_URI` | URI MongoDB locale ou Atlas, obligatoire | Aucune |
+| `FRONTEND_URL` | Origine HTTP(S) autorisée par CORS, sans chemin | `http://localhost:3000` |
+| `MONGODB_DB_NAME` | Nom explicite de la base applicative, facultatif | `school_attendance` |
+
+Avec Atlas, utiliser `mongodb+srv://<utilisateur>:<mot-de-passe>@<cluster>/` et
+autoriser l'adresse IP de la machine dans **Network Access**. L'utilisateur
+MongoDB doit avoir les droits sur la base applicative. Les identifiants restent
+uniquement dans `backend/.env`, jamais dans le README.
+
+Le serveur charge le fichier `.env` relativement à son propre dossier ; les
+variables déjà définies dans le processus ont priorité. Il valide la configuration,
+se connecte à MongoDB et exécute un `ping` avant d'écouter le port HTTP.
+En cas d'échec, il s'arrête avec un code non nul sans afficher l'URI privée.
+`Ctrl+C` ferme le serveur et la connexion MongoDB.
+
+Le fichier `.env` et ses variantes locales sont ignorés par Git ; `.env.example`
+est versionné. Vérification depuis la racine :
+
+```bash
+git check-ignore backend/.env
+```
+
+Sous Windows, si PowerShell bloque `npm.ps1`, utiliser `npm.cmd` à la place de
+`npm` dans les commandes documentées.
 
 ## 14.6. Démarrer le backend
 
@@ -1024,7 +1045,24 @@ npm run dev
 
 Le backend sera accessible sur :
 
-`http://localhost:5000`
+`http://localhost:4000`
+
+Pour un lancement sans rechargement automatique : `npm start`.
+
+Tester la connexion depuis un autre terminal PowerShell :
+
+```powershell
+Invoke-RestMethod http://localhost:4000/api/health
+```
+
+Résultat attendu (HTTP 200) :
+
+```json
+{"status":"ok","database":"connected"}
+```
+
+Si la connexion est perdue après le lancement, cette route renvoie HTTP 503 avec
+`{"status":"unavailable","database":"disconnected"}`.
 
 ## 14.7. Démarrer le frontend
 
@@ -1039,6 +1077,28 @@ npm start
 L'application sera accessible sur :
 
 `http://localhost:3000`
+
+### 14.8. Périmètre de la première livraison : arborescence et S1-02
+
+- Arborescence du chapitre 8 disponible localement pour les essais.
+- Serveur Express, connexion MongoDB, configuration d'environnement et CORS.
+- Contrôle de santé, arrêt propre et tests automatisés du socle backend.
+- Le lanceur frontend et les modèles vides sont conservés localement et ignorés
+  par Git ; ils ne font pas partie du livrable S1-02.
+- S2-02, S3-02, S4-02 et S5-02 seront implémentées séparément, après validation
+  de chaque étape. Les routes métier et tableaux de bord décrits plus haut
+  représentent donc encore la cible fonctionnelle.
+
+Pour exécuter les tests du socle :
+
+```bash
+cd backend
+npm test
+```
+
+Les tests HTTP utilisent un port éphémère et un état de connexion simulé ; ils
+n'accèdent pas à Atlas. Le test manuel `/api/health`, après `npm start`, vérifie
+la connexion réelle. Aucune donnée métier n'est créée par le démarrage.
 
 ---
 
