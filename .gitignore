@@ -1,0 +1,26 @@
+node_modules/
+build/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+
+# Lanceurs et arborescence de test locaux, hors tâches livrées.
+.local-testing/
+**/.gitkeep
+/frontend/package.json
+/frontend/package-lock.json
+/frontend/public/
+/frontend/src/App.js
+/frontend/src/App.css
+/frontend/src/index.js
+/frontend/src/index.css
+/backend/models/User.js
+/backend/models/Assignment.js
+/backend/models/Session.js
+/backend/models/Attendance.js
+/backend/models/Notification.js
+/backend/models/AuditLog.js
